@@ -1,0 +1,7 @@
+selenium
+requests
+lxml
+pymongo
+beautifulsoup4
+chromedriver
+webdriver_manager

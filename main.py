@@ -1,0 +1,63 @@
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+import time
+from pymongo import MongoClient
+from bs4 import BeautifulSoup
+import requests
+
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+
+# Task 1: Đăng nhập vào TopCV
+# Mở trình duyệt, vào trang TopCV
+
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+url = 'https://www.topcv.vn/login'
+driver.get(url)
+
+# Tìm kiếm box đăng nhập
+email_field = driver.find_element(By.NAME, "email")
+pass_field = driver.find_element(By.ID, "password")
+
+# Nhập tên người dùng và mật khẩu
+time.sleep(1)
+email_field.send_keys('baox2official@gmail.com')
+time.sleep(1)
+pass_field.send_keys("BaoBao15072002")
+time.sleep(2)
+
+# Bấm nút đăng nhập
+login_field = driver.find_element(By.XPATH, '//*[@id="form-login"]/div[4]/button')
+login_field.click()
+time.sleep(2)
+
+# Task 2: Tìm kiếm nội dụng trên thanh search box
+search_box = driver.find_element(By.XPATH, '//*[@id="keyword"]')
+search_box.send_keys("Software Engineer")# input("Nhập nghề nghiệp, vị trí muốn tìm: "))
+time.sleep(2)
+search_box.send_keys(Keys.RETURN)
+
+# Task 3: Mở url của các công ty cần tuyển dụng
+# Tải nội dung trang web
+response = requests.get(url)
+
+# Kiểm tra nếu yêu cầu thành công (HTTP status code 200)
+if response.status_code == 200:
+    # Tạo đối tượng BeautifulSoup
+    soup = BeautifulSoup(response.content, 'lxml')  # hoặc 'html.parser'
+    
+    # Tìm tất cả các thẻ <a>
+    all_a_tags = soup.find_all('a')
+    
+    # In ra tất cả các thẻ <a> và các thuộc tính của chúng
+    for a_tag in all_a_tags:
+        print(f" - href: {a_tag.get('href')}")
+else:
+    print(f"Yêu cầu không thành công với mã trạng thái: {response.status_code}")
+
+
+time.sleep(5)
