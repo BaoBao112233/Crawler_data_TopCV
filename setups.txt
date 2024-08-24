@@ -5,3 +5,4 @@ pymongo
 beautifulsoup4
 chromedriver
 webdriver_manager
+anticaptchaofficial
