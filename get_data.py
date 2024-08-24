@@ -15,7 +15,7 @@ print("Task 1: Đăng nhập vào TopCV")
 
 chrome_options = Options()
 chrome_options.add_argument("--headless")
-driver = webdriver.Chrome()# service=Service(ChromeDriverManager().install()), options=chrome_options
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 url = 'https://www.topcv.vn/viec-lam'
 driver.get(url)
 
@@ -24,6 +24,8 @@ search_box = driver.find_element(By.ID, "keyword") # #keyword
 search_box.send_keys("Software Engineer")# input("Nhập nghề nghiệp, vị trí muốn tìm: "))
 time.sleep(2)
 search_box.send_keys(Keys.RETURN)
+
+print("Task 3: Mở url của các công ty cần tuyển dụng")
 
 try:
     # Tìm thẻ div cụ thể bằng class name (thay 'ten-class-cua-ban' bằng tên class bạn cần)
@@ -35,16 +37,18 @@ try:
     # Lọc các thẻ <a> có thuộc tính href
     anchor_tags_with_href = [a for a in anchor_tags if a.get_attribute("href")]
 
-    print(f"Tìm thấy {len(anchor_tags_with_href)} thẻ <a> có thuộc tính href trong thẻ <div> đã chọn.")
-    for index, a in enumerate(anchor_tags_with_href):
-        print(f"Thẻ <a> {index + 1}: href='{a.get_attribute('href')}', text='{a.text}'")
+    print(f"Tìm thấy {len(anchor_tags_with_href)} thẻ <a> có thuộc tính href trong thẻ <div> có class 'job-list-search-result' đã chọn.")
+    list_post = [tag_a.get_attribute('href') for tag_a in anchor_tags_with_href]
+    # for index, post in enumerate(anchor_tags_with_href):
+    #     print(f"Thẻ <a> {index + 1}: href='{post.get_attribute('href')}', text='{post.text}'")
 
 except Exception as e:
     print("Không tìm thấy thẻ div hoặc thẻ a phù hợp:", e)
 
+while True:
+    pass
 
-# print("Task 3: Mở url của các công ty cần tuyển dụng")
-# # Tải nội dung trang web
+# Tải nội dung trang web
 # response = requests.get(url)
 
 # # Kiểm tra nếu yêu cầu thành công (HTTP status code 200)

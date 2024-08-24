@@ -15,7 +15,7 @@ print("Task 1: Đăng nhập vào TopCV")
 
 chrome_options = Options()
 chrome_options.add_argument("--headless")
-driver = webdriver.Chrome()# service=Service(ChromeDriverManager().install()), options=chrome_options
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 url = 'https://www.topcv.vn/login'
 driver.get(url)
 
@@ -60,24 +60,3 @@ search_box = driver.find_element(By.ID, "keyword") # #keyword
 search_box.send_keys("Software Engineer")# input("Nhập nghề nghiệp, vị trí muốn tìm: "))
 time.sleep(2)
 search_box.send_keys(Keys.RETURN)
-
-print("Task 3: Mở url của các công ty cần tuyển dụng")
-# Tải nội dung trang web
-response = requests.get(url)
-
-# Kiểm tra nếu yêu cầu thành công (HTTP status code 200)
-if response.status_code == 200:
-    # Tạo đối tượng BeautifulSoup
-    soup = BeautifulSoup(response.content, 'lxml')  # hoặc 'html.parser'
-    
-    # Tìm tất cả các thẻ <a>
-    all_a_tags = soup.find_all('a')
-    
-    # In ra tất cả các thẻ <a> và các thuộc tính của chúng
-    for a_tag in all_a_tags:
-        print(f" - href: {a_tag.get('href')}")
-else:
-    print(f"Yêu cầu không thành công với mã trạng thái: {response.status_code}")
-
-
-time.sleep(5)

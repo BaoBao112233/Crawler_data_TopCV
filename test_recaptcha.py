@@ -26,9 +26,9 @@ solver.set_website_key(sitekey_clean)
 
 g_response = solver.solve_and_return_solution()
 if g_response!= 0:
-    print("g_response"+g_response)
+    print("g_response: "+g_response)
 else:
-    print("task finished with error"+solver.error_code)
+    print("Error: "+solver.error_code)
 
 driver.execute_script('var element=document.getElementById("g-recaptcha-response"); element.style.display="";')
 
