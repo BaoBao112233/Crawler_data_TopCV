@@ -1,4 +1,5 @@
 import time
+import json
 import requests
 from bs4 import BeautifulSoup
 from pymongo import MongoClient
@@ -7,8 +8,19 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from anticaptchaofficial.recaptchav2proxyless import *
 from webdriver_manager.chrome import ChromeDriverManager
+
+def check(data, arr):
+    for item in arr:
+        if item in data or data in item:
+            return data
+
+def check_item(arr):
+    new_arr = []
+    for item in arr:
+        if item not in new_arr:
+            new_arr.append(item)
+    return new_arr
 
 def get_data(url):
     if "javascript" in url:
@@ -25,28 +37,26 @@ def get_data(url):
         # Tìm tất cả các thẻ div với class name cụ thể
         class_name = 'job-description__item'
         divs = soup.find_all('div', class_=class_name)
+        company_name = soup.find('h2', class_="company-name-label").find('a', class_='name').text
+        
+        description = '\n'.join(child.text for idx, child in enumerate(check_item(divs[0].find_all())) if idx > 2)
 
-        # In ra nội dung của các thẻ div
-        print("DIV 1")
-        dicription = '\n'.join(child.text for child in divs[0].find_all())
-        print("Dicription:", dicription)
+        request = '\n'.join(child.text for idx, child in enumerate(check_item(divs[1].find_all())) if idx > 2)
 
-        print("DIV 2")
-        for child in divs[1].find_all():
-            print(child.name, ":", child.text)
+        interest = '\n'.join(child.text for idx, child in enumerate(check_item(divs[2].find_all())) if idx > 2)
 
-        print("DIV 3")
-        for child in divs[2].find_all():
-            print(child.name, ":", child.text)
+        address = interest = '\n'.join(child.text for idx, child in enumerate(check_item(divs[3].find_all())) if idx > 1)
 
-        print("DIV 4")
-        for child in divs[3].find_all():
-            print(child.name, ":", child.text)
+        data = {
+            "URL": url,
+            "Tên công ty": company_name,
+            "Mô tả công việc": description,
+            "Yêu cầu ứng viên": request,
+            "Quyền lợi": interest,
+            "Địa chỉ làm việc": address
+        }
 
-        print("DIV 5")
-        for child in divs[4].find_all():
-            print(child.name, ":", child.text)
-
+        return data
     else:
         print(f"Không thể truy cập trang web. Mã trạng thái: {response.status_code}")
 
@@ -64,28 +74,38 @@ search_box.send_keys('Software Engineer')
 time.sleep(2)
 search_box.send_keys(Keys.RETURN)
 
-print("Task 3: Mở url của các công ty cần tuyển dụng")
+print("Task 3 + 4: Mở url của các công ty cần tuyển dụng + Đẩy dữ liệu lên MongoDB")
+# Kết nối MongoDB
+con = 'mongodb://localhost:27017/'
+client = MongoClient(con)
+db = client["tuyendung"]
+collection = db["TopCV"]
 try:
+
     # Tìm thẻ div cụ thể bằng class name (thay 'job-list-search-result' bằng tên class bạn cần)
     div_element = driver.find_element(By.CLASS_NAME, 'job-list-search-result')
-    
+
     # Tìm tất cả các thẻ <a> trong thẻ <div> đó
     anchor_tags = div_element.find_elements(By.TAG_NAME, "a")
 
     # Lọc các thẻ <a> có thuộc tính href
-    anchor_tags_with_href = [a for a in anchor_tags if a.get_attribute("href")]
+    anchor_tags_with_href = check_item([a for a in anchor_tags if a.get_attribute("href")])
 
     print(f"Tìm thấy {len(anchor_tags_with_href)} thẻ <a> có thuộc tính href trong thẻ <div> có class 'job-list-search-result' đã chọn.")
     list_post = [tag_a.get_attribute('href') for tag_a in anchor_tags_with_href]
     # for index, post in enumerate(anchor_tags_with_href):
     #     print(f"Thẻ <a> {index + 1}: href='{post.get_attribute('href')}', text='{post.text}'")
     i = 0
+
     for post in list_post:
-        if 'javascript' in post: continue
-        if i >= 10: break
-        get_data(post)
-        i += 1
-        break
+        if 'viec-lam' in post:
+            if i >= 10: break
+            data = get_data(post)
+            if type(data) == 'dict':
+                collection.insert_one(data)
+                i += 1
+    
+    print("Đã xong!!!")
 
 except Exception as e:
     print("Không tìm thấy thẻ div hoặc thẻ a phù hợp:", e)
