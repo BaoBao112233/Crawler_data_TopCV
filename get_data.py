@@ -22,43 +22,47 @@ def check_item(arr):
             new_arr.append(item)
     return new_arr
 
+def BS_get_data(content):
+    # Tạo đối tượng BeautifulSoup
+    soup = BeautifulSoup(content, 'html.parser')
+    # Tìm tất cả các thẻ div với class name cụ thể
+    class_name = 'job-description__item'
+    divs = soup.find_all('div', class_=class_name)
+    company_name = soup.find('h2', class_="company-name-label").find('a', class_='name').text
+    
+    description = '\n'.join(child.text for idx, child in enumerate(check_item(divs[0].find_all())) if idx > 2)
+
+    request = '\n'.join(child.text for idx, child in enumerate(check_item(divs[1].find_all())) if idx > 2)
+
+    interest = '\n'.join(child.text for idx, child in enumerate(check_item(divs[2].find_all())) if idx > 2)
+
+    address = interest = '\n'.join(child.text for idx, child in enumerate(check_item(divs[3].find_all())) if idx > 1)
+
+    data = {
+        "URL": url,
+        "Tên công ty": company_name,
+        "Mô tả công việc": description,
+        "Yêu cầu ứng viên": request,
+        "Quyền lợi": interest,
+        "Địa chỉ làm việc": address
+    }
+    return data
+
 def get_data(url):
     if "javascript" in url:
         return
     
     # Gửi yêu cầu HTTP GET đến URL
     response = requests.get(url)
-    time.sleep(5)
-
+    if response.status_code == 429:
+        time.sleep(int(response.headers["Retry-After"]))
+        data = BS_get_data(response.content)
+        return data
     # Kiểm tra nếu yêu cầu thành công
     if response.status_code == 200:
-
-        # Tạo đối tượng BeautifulSoup
-        soup = BeautifulSoup(response.content, 'html.parser')
-
-        # Tìm tất cả các thẻ div với class name cụ thể
-        class_name = 'job-description__item'
-        divs = soup.find_all('div', class_=class_name)
-        company_name = soup.find('h2', class_="company-name-label").find('a', class_='name').text
-        
-        description = '\n'.join(child.text for idx, child in enumerate(check_item(divs[0].find_all())) if idx > 2)
-
-        request = '\n'.join(child.text for idx, child in enumerate(check_item(divs[1].find_all())) if idx > 2)
-
-        interest = '\n'.join(child.text for idx, child in enumerate(check_item(divs[2].find_all())) if idx > 2)
-
-        address = interest = '\n'.join(child.text for idx, child in enumerate(check_item(divs[3].find_all())) if idx > 1)
-
-        data = {
-            "URL": url,
-            "Tên công ty": company_name,
-            "Mô tả công việc": description,
-            "Yêu cầu ứng viên": request,
-            "Quyền lợi": interest,
-            "Địa chỉ làm việc": address
-        }
-
+        data = BS_get_data(response.content)
         return data
+
     else:
         print(f"Không thể truy cập trang web. Mã trạng thái: {response.status_code}")
 
@@ -106,9 +110,8 @@ try:
             if i >= 10: break
             data = get_data(post)
             print(type(data), '\n', data)
-            if type(data) == 'dict':
-                collection.insert_one(data)
-                i += 1
+            collection.insert_one(data)
+            i += 1
     
     with open("save_file.txt", "w", encoding="utf-8") as file:
         file.write("\n".join(i for i in check_item(save)))
