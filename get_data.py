@@ -28,9 +28,11 @@ def get_data(url):
     
     # Gửi yêu cầu HTTP GET đến URL
     response = requests.get(url)
+    time.sleep(5)
 
     # Kiểm tra nếu yêu cầu thành công
     if response.status_code == 200:
+
         # Tạo đối tượng BeautifulSoup
         soup = BeautifulSoup(response.content, 'html.parser')
 
@@ -96,15 +98,21 @@ try:
     # for index, post in enumerate(anchor_tags_with_href):
     #     print(f"Thẻ <a> {index + 1}: href='{post.get_attribute('href')}', text='{post.text}'")
     i = 0
-
-    for post in list_post:
-        if 'viec-lam' in post:
+    save = []
+    for post in check_item(list_post):
+        # print(post)
+        if 'viec-lam' in post and 'javascript' not in post:
+            save.append(post)
             if i >= 10: break
             data = get_data(post)
+            print(type(data), '\n', data)
             if type(data) == 'dict':
                 collection.insert_one(data)
                 i += 1
     
+    with open("save_file.txt", "w", encoding="utf-8") as file:
+        file.write("\n".join(i for i in check_item(save)))
+
     print("Đã xong!!!")
 
 except Exception as e:
